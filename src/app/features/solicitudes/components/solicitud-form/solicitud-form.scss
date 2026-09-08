@@ -1,0 +1,49 @@
+.ti-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ti-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ti-field > div > label,
+.ti-field > label,
+.ti-field label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ti-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.ti-error-msg {
+  color: var(--p-red-500);
+  font-size: 0.8125rem;
+}
+
+.ti-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+@media (max-width: 640px) {
+  .ti-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ti-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+}

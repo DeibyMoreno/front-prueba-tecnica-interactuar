@@ -1,0 +1,69 @@
+<div class="ti-list-header">
+  <ti-page-header titulo="Solicitudes" descripcion="Registro de solicitudes de servicio TI" />
+  <p-button label="Nueva solicitud" icon="pi pi-plus" (onClick)="nueva()" />
+</div>
+
+<ti-solicitudes-filtros
+  [filtros]="store.filtros()"
+  [tecnicos]="tecnicos()"
+  [tipos]="tipos()"
+  (cambio)="onFiltros($event)"
+  (limpiar)="onLimpiar()"
+/>
+
+@if (store.lista.error()) {
+  <div class="ti-error">
+    <p>No se pudieron cargar las solicitudes.</p>
+    <p-button label="Reintentar" icon="pi pi-refresh" (onClick)="store.recargar()" />
+  </div>
+} @else if (vacio()) {
+  <ti-empty-state
+    titulo="Sin solicitudes"
+    descripcion="No hay resultados para los filtros actuales."
+    accionTexto="Limpiar filtros"
+    (accion)="onLimpiar()"
+  />
+} @else {
+  <ti-solicitudes-table
+    [items]="datos()"
+    [total]="total()"
+    [loading]="store.lista.isLoading()"
+    [pagina]="store.filtros().pagina ?? 1"
+    [limite]="store.filtros().limite ?? 10"
+    (paginaCambio)="onPagina($event)"
+    (ver)="verDetalle($event)"
+    (editar)="editarSolicitud($event)"
+    (asignar)="abrirAsignar($event)"
+    (desasignar)="desasignar($event)"
+    (cambiarEstado)="abrirCambiarEstado($event)"
+    (eliminar)="eliminar($event)"
+  />
+}
+
+<ti-solicitud-form
+  [(visible)]="dialogoVisible"
+  [solicitud]="editando()"
+  [tipos]="tipos()"
+  [saving]="guardando()"
+  (guardar)="onGuardar($event)"
+/>
+
+@if (asignando(); as s) {
+  <ti-asignar-dialog
+    [visible]="asignando() !== null"
+    (visibleChange)="asignando.set($event ? s : null)"
+    [tecnicos]="tecnicos()"
+    [saving]="asignandoEnCurso()"
+    (asignar)="onAsignar($event)"
+  />
+}
+
+@if (cambiandoEstado(); as s) {
+  <ti-cambiar-estado-dialog
+    [visible]="cambiandoEstado() !== null"
+    (visibleChange)="cambiandoEstado.set($event ? s : null)"
+    [estadoActual]="s.estado"
+    [saving]="cambiandoEnCurso()"
+    (cambiar)="onCambiarEstado($event)"
+  />
+}

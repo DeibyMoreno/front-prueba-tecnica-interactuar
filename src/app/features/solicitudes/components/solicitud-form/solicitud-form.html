@@ -1,0 +1,93 @@
+<p-dialog
+  [header]="esEdicion() ? 'Editar solicitud' : 'Nueva solicitud'"
+  [(visible)]="visible"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [breakpoints]="{ '960px': '90vw', '640px': '95vw' }"
+  [style]="{ width: '42rem' }"
+  [contentStyle]="{ 'max-height': '75vh', overflow: 'auto' }"
+>
+  @if (!editable()) {
+    <p-message severity="warn" text="Solo se puede editar en estado PENDIENTE." />
+  }
+
+  <form [formGroup]="form" (ngSubmit)="onGuardar()" class="ti-form">
+    <div class="ti-field">
+      <label for="f-titulo">Título *</label>
+      <input pInputText id="f-titulo" formControlName="titulo" maxlength="150" [fluid]="true" />
+      @if (form.controls.titulo.touched && form.controls.titulo.errors; as e) {
+        <small class="ti-error-msg">{{ e['server'] ?? 'Mínimo 5 caracteres.' }}</small>
+      }
+    </div>
+
+    <div class="ti-field">
+      <label for="f-descripcion">Descripción *</label>
+      <textarea pTextarea id="f-descripcion" formControlName="descripcion" rows="3" autoResize="true" [fluid]="true"></textarea>
+      @if (form.controls.descripcion.touched && form.controls.descripcion.errors; as e) {
+        <small class="ti-error-msg">{{ e['server'] ?? 'Mínimo 10 caracteres.' }}</small>
+      }
+    </div>
+
+    <div class="ti-row">
+      <div class="ti-field">
+        <label for="f-solicitante">Solicitante *</label>
+        <input pInputText id="f-solicitante" formControlName="solicitanteNombre" maxlength="150" [fluid]="true" />
+        @if (form.controls.solicitanteNombre.touched && form.controls.solicitanteNombre.errors; as e) {
+          <small class="ti-error-msg">{{ e['server'] ?? 'Requerido.' }}</small>
+        }
+      </div>
+
+      <div class="ti-field">
+        <label for="f-email">Email solicitante *</label>
+        <input pInputText id="f-email" type="email" formControlName="solicitanteEmail" [fluid]="true" />
+        @if (form.controls.solicitanteEmail.touched && form.controls.solicitanteEmail.errors; as e) {
+          <small class="ti-error-msg">{{ e['server'] ?? 'Email inválido.' }}</small>
+        }
+      </div>
+    </div>
+
+    <div class="ti-field">
+      <label for="f-area">Área solicitante</label>
+      <input pInputText id="f-area" formControlName="solicitanteArea" maxlength="100" [fluid]="true" />
+      @if (form.controls.solicitanteArea.touched && form.controls.solicitanteArea.errors; as e) {
+        <small class="ti-error-msg">{{ e['server'] ?? 'Máximo 100 caracteres.' }}</small>
+      }
+    </div>
+
+    <div class="ti-row">
+      <div class="ti-field">
+        <label for="f-tipo">Tipo de servicio *</label>
+        <p-select
+          inputId="f-tipo"
+          formControlName="tipoServicioId"
+          [options]="tipos()"
+          optionLabel="nombre"
+          optionValue="id"
+          placeholder="Seleccionar"
+          appendTo="body"
+          [fluid]="true"
+        />
+        @if (form.controls.tipoServicioId.touched && form.controls.tipoServicioId.errors; as e) {
+          <small class="ti-error-msg">{{ e['server'] ?? 'Requerido.' }}</small>
+        }
+      </div>
+
+      <div class="ti-field">
+        <label for="f-prioridad">Prioridad</label>
+        <p-select inputId="f-prioridad" formControlName="prioridad" [options]="prioridades" appendTo="body" [fluid]="true" />
+      </div>
+    </div>
+
+    <div class="ti-actions">
+      <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="visible.set(false)" />
+      <p-button
+        type="submit"
+        [label]="esEdicion() ? 'Guardar cambios' : 'Crear solicitud'"
+        icon="pi pi-check"
+        [loading]="saving()"
+        [disabled]="!editable()"
+      />
+    </div>
+  </form>
+</p-dialog>

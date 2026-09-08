@@ -1,0 +1,105 @@
+.ti-timeline-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 1.5rem 1rem;
+  text-align: center;
+
+  i {
+    font-size: 1.75rem;
+    color: var(--p-text-muted-color);
+  }
+
+  p {
+    margin: 0.5rem 0 0;
+    font-weight: 600;
+  }
+
+  small {
+    color: var(--p-text-muted-color);
+  }
+}
+
+:host ::ng-deep .ti-historial {
+  .p-timeline-event {
+    min-height: 0;
+  }
+
+  .p-timeline-event-opposite {
+    display: none;
+  }
+
+  .p-timeline-event-content {
+    padding: 0 0 1.25rem 0.5rem;
+  }
+
+  .p-timeline-event:last-child .p-timeline-event-content {
+    padding-bottom: 0.25rem;
+  }
+}
+
+.ti-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: 1px solid var(--p-surface-300);
+  background: var(--p-surface-0);
+  color: var(--p-text-muted-color);
+
+  i {
+    font-size: 0.875rem;
+  }
+}
+
+.ti-marker.ti-actual {
+  border-color: var(--p-primary-color);
+  background: var(--p-primary-100);
+  color: var(--p-primary-700);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-primary-color) 18%, transparent);
+}
+
+.ti-evento {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ti-fecha {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--p-text-muted-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.ti-estado-linea {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ti-desde {
+  color: var(--p-text-muted-color);
+}
+
+.ti-comentario {
+  margin: 0;
+  font-size: 0.9375rem;
+  text-wrap: pretty;
+}
+
+.ti-evento.ti-actual .ti-fecha {
+  color: var(--p-primary-700);
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .ti-marker {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+}

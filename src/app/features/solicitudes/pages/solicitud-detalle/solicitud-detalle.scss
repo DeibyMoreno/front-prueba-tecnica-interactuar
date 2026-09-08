@@ -1,0 +1,71 @@
+:host ::ng-deep .ti-back {
+  margin-bottom: 0.75rem;
+  padding-left: 0;
+}
+
+.ti-detalle-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.ti-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.ti-detalle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ti-detalle-grid dl {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 0.375rem 1rem;
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.ti-detalle-grid dt {
+  font-weight: 600;
+  color: var(--p-text-muted-color);
+}
+
+.ti-detalle-grid dd {
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ti-acciones-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.ti-error {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed var(--p-surface-300);
+  border-radius: var(--ti-radius);
+  background: var(--p-surface-0);
+}
+
+@media (max-width: 480px) {
+  .ti-detalle-grid dl {
+    grid-template-columns: 1fr;
+    gap: 0.125rem;
+  }
+
+  .ti-detalle-grid dd {
+    margin-bottom: 0.5rem;
+  }
+}

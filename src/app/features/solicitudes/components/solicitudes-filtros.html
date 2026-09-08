@@ -1,0 +1,59 @@
+<div class="ti-filtros">
+  <p-select
+    class="ti-filtro"
+    placeholder="Estado"
+    [options]="estados"
+    [fluid]="true"
+    [ngModel]="filtros().estado ?? null"
+    (ngModelChange)="cambio.emit({ estado: $event ?? undefined })"
+    [showClear]="true"
+  />
+  <p-select
+    class="ti-filtro"
+    placeholder="Prioridad"
+    [options]="prioridades"
+    [fluid]="true"
+    [ngModel]="filtros().prioridad ?? null"
+    (ngModelChange)="cambio.emit({ prioridad: $event ?? undefined })"
+    [showClear]="true"
+  />
+  <p-select
+    class="ti-filtro"
+    placeholder="Técnico"
+    [options]="tecnicos()"
+    optionLabel="nombreCompleto"
+    optionValue="id"
+    [fluid]="true"
+    [ngModel]="filtros().tecnicoId ?? null"
+    (ngModelChange)="cambio.emit({ tecnicoId: $event ?? undefined })"
+    [showClear]="true"
+  />
+  <p-select
+    class="ti-filtro"
+    placeholder="Tipo de servicio"
+    [options]="tipos()"
+    optionLabel="nombre"
+    optionValue="id"
+    [fluid]="true"
+    [ngModel]="filtros().tipoServicioId ?? null"
+    (ngModelChange)="cambio.emit({ tipoServicioId: $event ?? undefined })"
+    [showClear]="true"
+  />
+  <input
+    pInputText
+    class="ti-busqueda"
+    type="search"
+    placeholder="Buscar (mín. 2 letras)…"
+    [fluid]="true"
+    [ngModel]="filtros().busqueda ?? ''"
+    (ngModelChange)="busqueda$.next($event)"
+  />
+  <p-button
+    label="Limpiar"
+    icon="pi pi-filter-slash"
+    severity="secondary"
+    [outlined]="true"
+    styleClass="ti-limpiar"
+    (onClick)="limpiar.emit()"
+  />
+</div>

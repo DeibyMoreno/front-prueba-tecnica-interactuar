@@ -1,0 +1,18 @@
+.ti-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.ti-field > label {
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.ti-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

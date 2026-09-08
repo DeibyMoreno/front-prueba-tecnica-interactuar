@@ -1,0 +1,40 @@
+.ti-filtros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 0.625rem;
+  margin-bottom: 1rem;
+  padding: 0.875rem;
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--ti-radius);
+  background: var(--p-surface-0);
+}
+
+.ti-busqueda {
+  grid-column: span 2;
+  min-width: 0;
+}
+
+:host ::ng-deep .ti-limpiar {
+  width: 100%;
+  justify-content: center;
+}
+
+@media (max-width: 640px) {
+  .ti-filtros {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .ti-busqueda {
+    grid-column: span 2;
+  }
+}
+
+@media (max-width: 420px) {
+  .ti-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .ti-busqueda {
+    grid-column: span 1;
+  }
+}

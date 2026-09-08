@@ -1,0 +1,25 @@
+<p-dialog header="Asignar técnico" [(visible)]="visible" [modal]="true" [style]="{ width: '28rem' }">
+  <div class="ti-field">
+    <label for="a-tecnico">Técnico *</label>
+    <p-select
+      inputId="a-tecnico"
+      [options]="tecnicos()"
+      optionLabel="nombreCompleto"
+      optionValue="id"
+      placeholder="Seleccionar técnico"
+      appendTo="body"
+      [(ngModel)]="tecnicoId"
+    />
+  </div>
+
+  <div class="ti-actions">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="visible.set(false)" />
+    <p-button
+      label="Asignar"
+      icon="pi pi-user-plus"
+      [loading]="saving()"
+      [disabled]="!valido()"
+      (onClick)="onAsignar()"
+    />
+  </div>
+</p-dialog>

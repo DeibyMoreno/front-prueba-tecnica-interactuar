@@ -1,0 +1,65 @@
+.ti-list-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ti-error {
+  text-align: center;
+  padding: 3rem 1rem;
+  border: 1px dashed var(--p-surface-300);
+  border-radius: var(--ti-radius);
+  background: var(--p-surface-0);
+}
+
+:host ::ng-deep .ti-tabla {
+  border: 1px solid var(--p-surface-200);
+  border-radius: var(--ti-radius);
+  overflow: hidden;
+  background: var(--p-surface-0);
+}
+
+:host ::ng-deep .ti-tabla .ti-codigo {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .ti-tabla .ti-titulo {
+  max-width: 28ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:host ::ng-deep .ti-tabla .ti-fecha {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+:host ::ng-deep .ti-acciones {
+  display: flex;
+  gap: 0.125rem;
+  justify-content: flex-start;
+}
+
+:host ::ng-deep .ti-paginador {
+  border: 1px solid var(--p-surface-200);
+  border-top: 0;
+  border-radius: 0 0 var(--ti-radius) var(--ti-radius);
+  background: var(--p-surface-0);
+}
+
+@media (max-width: 640px) {
+  .ti-list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  :host ::ng-deep .ti-list-header .p-button {
+    width: 100%;
+  }
+}

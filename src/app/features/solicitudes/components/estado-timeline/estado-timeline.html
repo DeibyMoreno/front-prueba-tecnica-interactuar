@@ -1,0 +1,29 @@
+@if (historial().length === 0) {
+  <div class="ti-timeline-empty">
+    <i class="pi pi-history" aria-hidden="true"></i>
+    <p>Sin movimientos registrados.</p>
+    <small>Los cambios de estado aparecerán aquí.</small>
+  </div>
+} @else {
+  <p-timeline [value]="historial()" layout="vertical"  styleClass="ti-historial">
+    <ng-template #marker let-h>
+      <span class="ti-marker" [class.ti-actual]="h.id === ultimo()?.id" aria-hidden="true">
+        <i [class]="'pi ' + iconoPara(h.estadoNuevo)"></i>
+      </span>
+    </ng-template>
+    <ng-template #content let-h>
+      <div class="ti-evento" [class.ti-actual]="h.id === ultimo()?.id">
+        <span class="ti-fecha">{{ h.registradoEn | date: 'longDate' }}</span>
+        <span class="ti-estado-linea">
+          <p-tag [value]="h.estadoNuevo" [severity]="h.estadoNuevo | estadoSeverity" />
+          @if (h.estadoAnterior) {
+            <small class="ti-desde">desde {{ h.estadoAnterior }}</small>
+          }
+        </span>
+        @if (h.comentario) {
+          <p class="ti-comentario">{{ h.comentario }}</p>
+        }
+      </div>
+    </ng-template>
+  </p-timeline>
+}

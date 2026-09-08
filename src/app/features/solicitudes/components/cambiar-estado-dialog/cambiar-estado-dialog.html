@@ -1,0 +1,32 @@
+<p-dialog header="Cambiar estado" [(visible)]="visible" [modal]="true" [style]="{ width: '28rem' }">
+  <p-message severity="info" [text]="'Estado actual: ' + estadoActual()"/>
+
+  <div class="ti-field">
+    <label for="e-destino">Nuevo estado *</label>
+    <p-select
+      inputId="e-destino"
+      [options]="destinos()"
+      placeholder="Seleccionar destino"
+      appendTo="body"
+      [(ngModel)]="destino"
+    />
+  </div>
+
+  @if (exigeComentario()) {
+    <div class="ti-field">
+      <label for="e-comentario">Comentario * (obligatorio para cancelar)</label>
+      <textarea pTextarea id="e-comentario" rows="3" maxlength="500" [(ngModel)]="comentario"></textarea>
+    </div>
+  }
+
+  <div class="ti-actions">
+    <p-button label="Cancelar" severity="secondary" [text]="true" (onClick)="visible.set(false)" />
+    <p-button
+      label="Confirmar"
+      icon="pi pi-check"
+      [loading]="saving()"
+      [disabled]="!valido()"
+      (onClick)="onCambiar()"
+    />
+  </div>
+</p-dialog>

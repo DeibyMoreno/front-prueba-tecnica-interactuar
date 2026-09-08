@@ -1,0 +1,113 @@
+<p-table
+  [value]="items()"
+  [loading]="loading()"
+  [paginator]="false"
+  [stripedRows]="true"
+  [rowHover]="true"
+  size="small"
+  responsiveLayout="scroll"
+  styleClass="ti-tabla"
+>
+  <ng-template #header>
+    <tr>
+      <th>Acciones</th>
+      <th class="ti-col-codigo">Código</th>
+      <th>Título</th>
+      <th>Solicitante</th>
+      <th>Servicio</th>
+      <th>Técnico</th>
+      <th>Estado</th>
+      <th>Prioridad</th>
+      <th>Fecha</th>
+    </tr>
+  </ng-template>
+  <ng-template #body let-s>
+    <tr>
+      <td>
+        <div class="ti-acciones">
+          <p-button
+            icon="pi pi-eye"
+            severity="secondary"
+            [text]="true"
+            [rounded]="true"
+            ariaLabel="Ver detalle"
+            (onClick)="ver.emit(s)"
+          />
+          @if (puedeEditar(s.estado)) {
+            <p-button
+              icon="pi pi-pencil"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Editar solicitud"
+              (onClick)="editar.emit(s)"
+            />
+          }
+          @if (puedeAsignar(s.estado)) {
+            <p-button
+              icon="pi pi-user-plus"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Asignar técnico"
+              (onClick)="asignar.emit(s)"
+            />
+          }
+          @if (puedeDesasignar(s.estado)) {
+            <p-button
+              icon="pi pi-user-minus"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Desasignar técnico"
+              (onClick)="desasignar.emit(s)"
+            />
+          }
+          @if (tieneDestinos(s.estado)) {
+            <p-button
+              icon="pi pi-arrow-right"
+              severity="secondary"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Cambiar estado"
+              (onClick)="cambiarEstado.emit(s)"
+            />
+          }
+          @if (puedeEliminar(s.estado)) {
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Eliminar solicitud"
+              (onClick)="eliminar.emit(s)"
+            />
+          }
+        </div>
+      </td>
+      <td class="ti-codigo">{{ s.codigo }}</td>
+      <td class="ti-titulo">{{ s.titulo }}</td>
+      <td>{{ s.solicitanteNombre }}</td>
+      <td>{{ s.tipoServicio?.nombre ?? '—' }}</td>
+      <td>{{ s.tecnico?.nombreCompleto ?? 'Sin asignar' }}</td>
+      <td><p-tag [value]="s.estado" [severity]="s.estado | estadoSeverity" /></td>
+      <td><p-tag [value]="s.prioridad" [severity]="s.prioridad | estadoSeverity" /></td>
+      <td class="ti-fecha">{{ s.fechaSolicitud | date: 'shortDate' }}</td>
+    </tr>
+  </ng-template>
+  <ng-template #emptymessage>
+    <tr>
+      <td colspan="9">Sin resultados para los filtros actuales.</td>
+    </tr>
+  </ng-template>
+</p-table>
+<p-paginator
+  [rows]="limite()"
+  [totalRecords]="total()"
+  [first]="(pagina() - 1) * limite()"
+  [rowsPerPageOptions]="[5, 10, 20]"
+  [showCurrentPageReport]="true"
+  currentPageReportTemplate="{first}–{last} de {totalRecords}"
+  styleClass="ti-paginador"
+  (onPageChange)="onPagina($event)"
+/>

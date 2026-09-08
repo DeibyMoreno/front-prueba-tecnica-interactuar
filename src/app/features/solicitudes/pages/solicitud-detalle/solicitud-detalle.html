@@ -1,0 +1,113 @@
+<p-button
+  label="Volver al listado"
+  icon="pi pi-arrow-left"
+  [text]="true"
+  severity="secondary"
+  styleClass="ti-back"
+  (onClick)="irALista()"
+/>
+
+@if (detalle.isLoading()) {
+  <p-skeleton width="16rem" height="2rem" />
+  <div class="ti-detalle-grid">
+    <p-skeleton height="12rem" />
+    <p-skeleton height="12rem" />
+  </div>
+} @else if (detalle.error() || !detalle.value()) {
+  <div class="ti-error">
+    <p>No se pudo cargar la solicitud.</p>
+    <p-button label="Reintentar" icon="pi pi-refresh" (onClick)="recargar()" />
+  </div>
+} @else if (detalle.value(); as s) {
+  <div class="ti-detalle-header">
+    <ti-page-header [titulo]="s.codigo" [descripcion]="s.titulo" />
+    <div class="ti-tags">
+      <p-tag [value]="s.estado" [severity]="s.estado | estadoSeverity" />
+      <p-tag [value]="s.prioridad" [severity]="s.prioridad | estadoSeverity" />
+      @if (eliminable()) {
+          <p-button label="Eliminar" icon="pi pi-trash" size="small" severity="danger" (onClick)="eliminar()" />
+        }
+    </div>
+  </div>
+
+  <div class="ti-detalle-grid">
+    <p-card header="Solicitud">
+      <p>{{ s.descripcion }}</p>
+      <dl>
+        <dt>Fecha solicitud</dt>
+        <dd>{{ s.fechaSolicitud | date: 'short' }}</dd>
+        @if (s.fechaAsignacion) {
+          <dt>Fecha asignación</dt>
+          <dd>{{ s.fechaAsignacion | date: 'short' }}</dd>
+        }
+        @if (s.fechaCierre) {
+          <dt>Fecha cierre</dt>
+          <dd>{{ s.fechaCierre | date: 'short' }}</dd>
+        }
+      </dl>
+    </p-card>
+
+    <p-card header="Solicitante">
+      <dl>
+        <dt>Nombre</dt>
+        <dd>{{ s.solicitanteNombre }}</dd>
+        <dt>Email</dt>
+        <dd>{{ s.solicitanteEmail }}</dd>
+        @if (s.solicitanteArea) {
+          <dt>Área</dt>
+          <dd>{{ s.solicitanteArea }}</dd>
+        }
+      </dl>
+    </p-card>
+
+    <p-card header="Asignación">
+      <dl>
+        <dt>Servicio</dt>
+        <dd>{{ s.tipoServicio?.nombre ?? '—' }}</dd>
+        <dt>Técnico</dt>
+        <dd>{{ s.tecnico?.nombreCompleto ?? 'Sin asignar' }}</dd>
+      </dl>
+      <div class="ti-acciones-detalle">
+        @if (asignable()) {
+          <p-button label="Asignar" icon="pi pi-user-plus" size="small" (onClick)="mostrarAsignar.set(true)" />
+        }
+        @if (desasignable()) {
+          <p-button
+            label="Desasignar"
+            icon="pi pi-user-minus"
+            size="small"
+            severity="secondary"
+            (onClick)="desasignar()"
+          />
+        }
+        @if (tieneDestinos()) {
+          <p-button
+            label="Cambiar estado"
+            icon="pi pi-arrow-right"
+            size="small"
+            severity="secondary"
+            (onClick)="mostrarEstado.set(true)"
+          />
+        }
+      </div>
+    </p-card>
+
+    <p-card [header]="historial().length > 0 ? 'Historial · ' + historial().length : 'Historial'">
+      <ti-estado-timeline [historial]="historial()" />
+    </p-card>
+  </div>
+
+  <ti-asignar-dialog
+    [(visible)]="mostrarAsignar"
+    [tecnicos]="tecnicos()"
+    [saving]="asignandoEnCurso()"
+    (asignar)="onAsignar($event)"
+  />
+
+  <ti-cambiar-estado-dialog
+    [(visible)]="mostrarEstado"
+    [estadoActual]="s.estado"
+    [saving]="cambiandoEnCurso()"
+    (cambiar)="onCambiarEstado($event)"
+  />
+}
