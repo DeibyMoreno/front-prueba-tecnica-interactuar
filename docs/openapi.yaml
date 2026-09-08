@@ -1,0 +1,783 @@
+openapi: 3.0.3
+info:
+  title: Soporte TI — API
+  version: 1.0.0
+  description: |
+    API REST para registrar solicitudes de servicio TI y asignarlas a técnicos.
+
+    ## Ciclo de vida de una solicitud
+
+    ```
+    PENDIENTE → ASIGNADA → EN_PROCESO → RESUELTA → CERRADA
+         ↘__________|___________↙
+                     ↓
+                 CANCELADA (exige comentario)
+    ```
+
+    * Crear siempre deja la solicitud en `PENDIENTE`.
+    * `PATCH /{id}/asignar` hace `PENDIENTE → ASIGNADA`.
+    * `PATCH /{id}/desasignar` revierte `ASIGNADA → PENDIENTE`.
+    * `PATCH /{id}/estado` avanza al destino permitido (`EN_PROCESO`, `RESUELTA`,
+      `CERRADA`, `CANCELADA`); cancelar exige `comentario`.
+    * Editar solo en `PENDIENTE`; eliminar solo en `PENDIENTE` o `CANCELADA`.
+    * Cada cambio de estado o asignación escribe una fila en `solicitud_historial`
+      dentro de la misma transacción.
+
+    ## Forma de las respuestas
+
+    Éxito: `{ "data": ... }` (los listados paginados agregan `meta`).
+    Error: `{ "error": { "codigo": "...", "mensaje": "...", "detalles": [...] } }`.
+
+    ## Catálogos de solo lectura
+
+    `tecnicos` y `tipos-servicio` existen para alimentar los `<select>` del
+    frontend Angular; la prueba pide CRUD del formulario de solicitudes.
+servers:
+  - url: http://localhost:3000/api
+    description: Desarrollo local
+tags:
+  - name: Health
+    description: Estado del servicio y de la conexión a la base.
+  - name: Tecnicos
+    description: Catálogo de técnicos (solo lectura).
+  - name: Tipos de servicio
+    description: Catálogo de servicios que presta el área de TI (solo lectura).
+  - name: Solicitudes
+    description: Entidad central (lectura, escritura y máquina de estados).
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Estado del servicio
+      operationId: obtenerEstadoSalud
+      responses:
+        '200':
+          description: Servicio operativo con base conectada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoSalud'
+              example:
+                data:
+                  estado: ok
+                  servicio: soporte-ti-api
+                  version: 1.0.0
+                  ambiente: development
+                  baseDatos: conectada
+                  tiempoActivoSegundos: 123
+                  timestamp: '2026-01-01T00:00:00.000Z'
+        '503':
+          description: Servicio degradado (base sin conexión).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EstadoSalud'
+
+  /tecnicos:
+    get:
+      tags: [Tecnicos]
+      summary: Lista de técnicos
+      operationId: listarTecnicos
+      parameters:
+        - $ref: '#/components/parameters/ActivoQuery'
+        - $ref: '#/components/parameters/BusquedaQuery'
+      responses:
+        '200':
+          description: Lista de técnicos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Tecnico'
+              example:
+                data:
+                  - id: 1
+                    nombreCompleto: Pedro Pérez
+                    documento: '1020304050'
+                    email: pedro.perez@empresa.com
+                    telefono: '3001112233'
+                    activo: true
+        '400':
+          $ref: '#/components/responses/Validacion'
+
+  /tecnicos/{id}:
+    get:
+      tags: [Tecnicos]
+      summary: Detalle de un técnico
+      operationId: obtenerTecnicoPorId
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Técnico encontrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Tecnico'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /tipos-servicio:
+    get:
+      tags: [Tipos de servicio]
+      summary: Lista de tipos de servicio
+      operationId: listarTiposServicio
+      parameters:
+        - $ref: '#/components/parameters/ActivoQuery'
+        - $ref: '#/components/parameters/BusquedaQuery'
+      responses:
+        '200':
+          description: Lista de tipos de servicio.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TipoServicio'
+              example:
+                data:
+                  - id: 1
+                    nombre: Mantenimiento Impresora
+                    descripcion: Soporte correctivo y preventivo de impresoras
+                    activo: true
+        '400':
+          $ref: '#/components/responses/Validacion'
+
+  /tipos-servicio/{id}:
+    get:
+      tags: [Tipos de servicio]
+      summary: Detalle de un tipo de servicio
+      operationId: obtenerTipoServicioPorId
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Tipo de servicio encontrado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TipoServicio'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+
+  /solicitudes:
+    get:
+      tags: [Solicitudes]
+      summary: Lista solicitudes con filtros y paginación
+      operationId: listarSolicitudes
+      parameters:
+        - name: estado
+          in: query
+          schema:
+            $ref: '#/components/schemas/EstadoSolicitud'
+        - name: prioridad
+          in: query
+          schema:
+            $ref: '#/components/schemas/PrioridadSolicitud'
+        - name: tecnicoId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - name: tipoServicioId
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+        - $ref: '#/components/parameters/BusquedaQuery'
+        - name: pagina
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limite
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+      responses:
+        '200':
+          description: Página de solicitudes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SolicitudPagina'
+        '400':
+          $ref: '#/components/responses/Validacion'
+    post:
+      tags: [Solicitudes]
+      summary: Crear solicitud (siempre PENDIENTE)
+      operationId: crearSolicitud
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CrearSolicitud'
+            example:
+              titulo: Impresora de contabilidad no imprime
+              descripcion: La impresora HP del piso 3 marca error de tóner y no responde.
+              solicitanteNombre: Laura Díaz
+              solicitanteEmail: laura.diaz@empresa.com
+              solicitanteArea: Contabilidad
+              tipoServicioId: 1
+              prioridad: ALTA
+      responses:
+        '201':
+          description: Solicitud creada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Solicitud'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+
+  /solicitudes/{id}:
+    get:
+      tags: [Solicitudes]
+      summary: Detalle de una solicitud (con historial)
+      operationId: obtenerSolicitudPorId
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Solicitud encontrada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/SolicitudDetalle'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+    patch:
+      tags: [Solicitudes]
+      summary: Editar campos (solo PENDIENTE)
+      operationId: editarSolicitud
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EditarSolicitud'
+            example:
+              titulo: Impresora de contabilidad no imprime (actualizado)
+              prioridad: CRITICA
+      responses:
+        '200':
+          description: Solicitud editada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Solicitud'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+    delete:
+      tags: [Solicitudes]
+      summary: Eliminar (PENDIENTE o CANCELADA)
+      operationId: eliminarSolicitud
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Solicitud eliminada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: object
+                    required: [mensaje]
+                    properties:
+                      mensaje:
+                        type: string
+                        example: Solicitud eliminada.
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+
+  /solicitudes/{id}/asignar:
+    patch:
+      tags: [Solicitudes]
+      summary: Asignar técnico (PENDIENTE → ASIGNADA)
+      operationId: asignarSolicitud
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tecnicoId]
+              properties:
+                tecnicoId:
+                  type: integer
+                  minimum: 1
+                  example: 1
+      responses:
+        '200':
+          description: Solicitud asignada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Solicitud'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+
+  /solicitudes/{id}/desasignar:
+    patch:
+      tags: [Solicitudes]
+      summary: Desasignar técnico (ASIGNADA → PENDIENTE)
+      operationId: desasignarSolicitud
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Solicitud desasignada.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Solicitud'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+
+  /solicitudes/{id}/estado:
+    patch:
+      tags: [Solicitudes]
+      summary: Cambiar estado (EN_PROCESO, RESUELTA, CERRADA, CANCELADA)
+      operationId: cambiarEstadoSolicitud
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CambiarEstado'
+            examples:
+              resolver:
+                summary: Resolver (EN_PROCESO → RESUELTA)
+                value:
+                  estado: RESUELTA
+              cancelar:
+                summary: Cancelar (exige comentario)
+                value:
+                  estado: CANCELADA
+                  comentario: Cancelada por duplicidad
+      responses:
+        '200':
+          description: Estado cambiado.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Solicitud'
+        '400':
+          $ref: '#/components/responses/Validacion'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+
+components:
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Id numérico mayor que cero.
+    ActivoQuery:
+      name: activo
+      in: query
+      schema:
+        type: string
+        enum: ['true', 'false']
+      description: Filtra por el campo `activo`.
+    BusquedaQuery:
+      name: busqueda
+      in: query
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 100
+      description: Búsqueda de texto (2 a 100 caracteres).
+
+  responses:
+    Validacion:
+      description: La petición no cumple el contrato (400, codigo VALIDACION).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: VALIDACION
+              mensaje: Error de validación.
+              detalles:
+                - campo: titulo
+                  mensaje: El título debe tener al menos 5 caracteres.
+    NoEncontrado:
+      description: El recurso no existe (404, codigo NO_ENCONTRADO).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: NO_ENCONTRADO
+              mensaje: No existe una solicitud con id 999.
+    Conflicto:
+      description: Petición válida pero incompatible con el estado actual (409, codigo CONFLICTO).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error:
+              codigo: CONFLICTO
+              mensaje: No se puede cambiar de PENDIENTE a RESUELTA.
+
+  schemas:
+    EstadoSolicitud:
+      type: string
+      enum: [PENDIENTE, ASIGNADA, EN_PROCESO, RESUELTA, CERRADA, CANCELADA]
+    PrioridadSolicitud:
+      type: string
+      enum: [BAJA, MEDIA, ALTA, CRITICA]
+
+    EstadoSalud:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [estado, servicio, version, ambiente, baseDatos, tiempoActivoSegundos, timestamp]
+          properties:
+            estado:
+              type: string
+              enum: [ok, degradado]
+            servicio:
+              type: string
+              example: soporte-ti-api
+            version:
+              type: string
+              example: 1.0.0
+            ambiente:
+              type: string
+              enum: [development, test, production]
+            baseDatos:
+              type: string
+              enum: [conectada, sin conexión]
+            tiempoActivoSegundos:
+              type: integer
+            timestamp:
+              type: string
+              format: date-time
+
+    Tecnico:
+      type: object
+      required: [id, nombreCompleto, documento, email, activo]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombreCompleto:
+          type: string
+          example: Pedro Pérez
+        documento:
+          type: string
+          example: '1020304050'
+        email:
+          type: string
+          format: email
+          example: pedro.perez@empresa.com
+        telefono:
+          type: string
+          nullable: true
+          example: '3001112233'
+        activo:
+          type: boolean
+          example: true
+
+    TipoServicio:
+      type: object
+      required: [id, nombre, activo]
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: Mantenimiento Impresora
+        descripcion:
+          type: string
+          nullable: true
+          example: Soporte correctivo y preventivo de impresoras
+        activo:
+          type: boolean
+          example: true
+
+    Solicitud:
+      type: object
+      required:
+        [id, codigo, titulo, descripcion, solicitanteNombre, solicitanteEmail, estado, prioridad, fechaSolicitud]
+      properties:
+        id:
+          type: integer
+          example: 1
+        codigo:
+          type: string
+          description: Consecutivo generado por la base (SOL-000001…).
+          example: SOL-000001
+        titulo:
+          type: string
+          example: Impresora de contabilidad no imprime
+        descripcion:
+          type: string
+        solicitanteNombre:
+          type: string
+          example: Laura Díaz
+        solicitanteEmail:
+          type: string
+          format: email
+        solicitanteArea:
+          type: string
+          nullable: true
+          example: Contabilidad
+        estado:
+          $ref: '#/components/schemas/EstadoSolicitud'
+        prioridad:
+          $ref: '#/components/schemas/PrioridadSolicitud'
+        fechaSolicitud:
+          type: string
+          format: date-time
+        fechaAsignacion:
+          type: string
+          format: date-time
+          nullable: true
+        fechaCierre:
+          type: string
+          format: date-time
+          nullable: true
+        tipoServicio:
+          type: object
+          properties:
+            id:
+              type: integer
+            nombre:
+              type: string
+        tecnico:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            nombreCompleto:
+              type: string
+
+    SolicitudDetalle:
+      allOf:
+        - $ref: '#/components/schemas/Solicitud'
+        - type: object
+          properties:
+            historial:
+              type: array
+              items:
+                $ref: '#/components/schemas/SolicitudHistorial'
+
+    SolicitudHistorial:
+      type: object
+      properties:
+        id:
+          type: integer
+        estadoAnterior:
+          $ref: '#/components/schemas/EstadoSolicitud'
+          nullable: true
+        estadoNuevo:
+          $ref: '#/components/schemas/EstadoSolicitud'
+        comentario:
+          type: string
+          nullable: true
+        registradoEn:
+          type: string
+          format: date-time
+
+    SolicitudPagina:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Solicitud'
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    Meta:
+      type: object
+      required: [pagina, limite, total]
+      properties:
+        pagina:
+          type: integer
+          example: 1
+        limite:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 42
+
+    CrearSolicitud:
+      type: object
+      required: [titulo, descripcion, solicitanteNombre, solicitanteEmail, tipoServicioId]
+      properties:
+        titulo:
+          type: string
+          minLength: 5
+          maxLength: 150
+        descripcion:
+          type: string
+          minLength: 10
+        solicitanteNombre:
+          type: string
+          minLength: 1
+          maxLength: 150
+        solicitanteEmail:
+          type: string
+          format: email
+        solicitanteArea:
+          type: string
+          maxLength: 100
+        tipoServicioId:
+          type: integer
+          minimum: 1
+        prioridad:
+          $ref: '#/components/schemas/PrioridadSolicitud'
+          default: MEDIA
+
+    EditarSolicitud:
+      type: object
+      minProperties: 1
+      properties:
+        titulo:
+          type: string
+          minLength: 5
+          maxLength: 150
+        descripcion:
+          type: string
+          minLength: 10
+        solicitanteNombre:
+          type: string
+          minLength: 1
+          maxLength: 150
+        solicitanteEmail:
+          type: string
+          format: email
+        solicitanteArea:
+          type: string
+          maxLength: 100
+        tipoServicioId:
+          type: integer
+          minimum: 1
+        prioridad:
+          $ref: '#/components/schemas/PrioridadSolicitud'
+
+    CambiarEstado:
+      type: object
+      required: [estado]
+      properties:
+        estado:
+          type: string
+          enum: [EN_PROCESO, RESUELTA, CERRADA, CANCELADA]
+          description: Destino permitido; CANCELADA exige `comentario`.
+        comentario:
+          type: string
+          maxLength: 500
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [codigo, mensaje]
+          properties:
+            codigo:
+              type: string
+              enum: [VALIDACION, NO_ENCONTRADO, CONFLICTO, JSON_INVALIDO, ERROR_INTERNO]
+            mensaje:
+              type: string
+            detalles:
+              description: Solo presente cuando hay detalle (validación o 500 fuera de producción).
