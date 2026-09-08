@@ -1,0 +1,121 @@
+.ti-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.ti-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.625rem 1.25rem;
+  border-bottom: 1px solid var(--p-surface-200);
+  background: color-mix(in srgb, var(--p-surface-0) 92%, transparent);
+  backdrop-filter: blur(8px);
+}
+
+.ti-brand-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.ti-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.ti-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.ti-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  padding: 1rem 0.75rem;
+  border-right: 1px solid var(--p-surface-200);
+  background: var(--p-surface-0);
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border-radius: var(--ti-radius);
+    color: var(--p-text-muted-color);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9375rem;
+
+    &:hover {
+      background: var(--p-surface-100);
+      color: inherit;
+    }
+
+    &.active {
+      background: var(--p-primary-100);
+      color: var(--p-primary-700);
+      font-weight: 600;
+    }
+  }
+}
+
+.ti-drawer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.75rem;
+    border-radius: var(--ti-radius);
+    text-decoration: none;
+    color: inherit;
+    font-weight: 500;
+
+    &.active {
+      background: var(--p-primary-100);
+      color: var(--p-primary-700);
+      font-weight: 600;
+    }
+  }
+}
+
+.ti-content {
+  flex: 1;
+  min-width: 0;
+  padding: 1.5rem;
+  max-width: 1280px;
+  width: 100%;
+  margin-inline: auto;
+}
+
+@media (max-width: 900px) {
+  .ti-sidebar {
+    display: none;
+  }
+
+  .ti-content {
+    padding: 1rem;
+  }
+}
+
+@media (min-width: 901px) {
+  :host ::ng-deep .ti-menu-btn {
+    display: none;
+  }
+}

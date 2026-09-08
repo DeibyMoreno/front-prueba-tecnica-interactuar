@@ -1,0 +1,233 @@
+<div class="ti-list-header">
+  <ti-page-header
+    titulo="Tablas Maestras"
+    descripcion="Directorio de personal técnico y catálogo de servicios de TI disponibles para asignación."
+  />
+</div>
+
+<p-tabs [value]="tabActiva()" (valueChange)="cambiarTab($event)" class="ti-tabs-card">
+  <p-tablist>
+    <p-tab value="tecnicos">
+      <i class="pi pi-users mr-2"></i>
+      <span>Técnicos de Soporte</span>
+      <span class="ti-pill-badge">{{ tecnicosActivos() }}/{{ totalTecnicos() }}</span>
+    </p-tab>
+    <p-tab value="servicios">
+      <i class="pi pi-th-large mr-2"></i>
+      <span>Tipos de Solicitud</span>
+      <span class="ti-pill-badge">{{ tiposActivos() }}/{{ totalTipos() }}</span>
+    </p-tab>
+  </p-tablist>
+
+  <p-tabpanels>
+    <!-- Panel de Técnicos -->
+    <p-tabpanel value="tecnicos">
+      <div class="ti-panel-toolbar">
+        <div class="ti-toolbar-filtros">
+          <input
+            pInputText
+            type="search"
+            class="ti-input-buscar"
+            placeholder="Buscar por nombre, documento, correo o teléfono..."
+            [ngModel]="busquedaTecnicos()"
+            (ngModelChange)="busquedaTecnicos.set($event)"
+          />
+          <p-select
+            class="ti-select-estado"
+            [options]="opcionesEstado"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="estadoTecnicos()"
+            (ngModelChange)="estadoTecnicos.set($event)"
+          />
+          @if (busquedaTecnicos() || estadoTecnicos() !== null) {
+            <p-button
+              icon="pi pi-filter-slash"
+              label="Limpiar"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="limpiarFiltrosTecnicos()"
+            />
+          }
+        </div>
+        <p-button
+          icon="pi pi-refresh"
+          label="Actualizar"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="cargandoTecnicos()"
+          (onClick)="cargarTecnicos()"
+        />
+      </div>
+
+      @if (!cargandoTecnicos() && tecnicosFiltrados().length === 0) {
+        <ti-empty-state
+          titulo="Sin técnicos"
+          descripcion="No se encontraron técnicos que coincidan con los filtros aplicados."
+          accionTexto="Limpiar filtros"
+          (accion)="limpiarFiltrosTecnicos()"
+        />
+      } @else {
+        <p-table
+          [value]="tecnicosFiltrados()"
+          [loading]="cargandoTecnicos()"
+          [stripedRows]="true"
+          [rowHover]="true"
+          size="small"
+          responsiveLayout="scroll"
+          styleClass="ti-tabla"
+        >
+          <ng-template #header>
+            <tr>
+              <th style="width: 4.5rem;">ID</th>
+              <th>Nombre Completo</th>
+              <th>Documento</th>
+              <th>Correo Electrónico</th>
+              <th>Teléfono</th>
+              <th style="width: 7rem;">Estado</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-t>
+            <tr>
+              <td class="ti-celda-id">#{{ t.id }}</td>
+              <td class="ti-celda-nombre">
+                <div class="ti-user-badge">
+                  <div class="ti-avatar-mini">
+                    <i class="pi pi-user"></i>
+                  </div>
+                  <span class="ti-nombre-texto">{{ t.nombreCompleto }}</span>
+                </div>
+              </td>
+              <td class="ti-mono">{{ t.documento }}</td>
+              <td>
+                <div class="ti-dato-con-accion">
+                  <a [href]="'mailto:' + t.email" class="ti-link">{{ t.email }}</a>
+                  <p-button
+                    icon="pi pi-copy"
+                    severity="secondary"
+                    [text]="true"
+                    [rounded]="true"
+                    ariaLabel="Copiar correo"
+                    (onClick)="copiarTexto(t.email, 'Correo')"
+                  />
+                </div>
+              </td>
+              <td>
+                @if (t.telefono) {
+                  <div class="ti-dato-con-accion">
+                    <a [href]="'tel:' + t.telefono" class="ti-link">{{ t.telefono }}</a>
+                    <p-button
+                      icon="pi pi-copy"
+                      severity="secondary"
+                      [text]="true"
+                      [rounded]="true"
+                      ariaLabel="Copiar teléfono"
+                      (onClick)="copiarTexto(t.telefono, 'Teléfono')"
+                    />
+                  </div>
+                } @else {
+                  <span class="ti-sin-dato">Sin registrar</span>
+                }
+              </td>
+              <td>
+                <p-tag
+                  [value]="t.activo ? 'Activo' : 'Inactivo'"
+                  [severity]="t.activo ? 'success' : 'secondary'"
+                />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </p-tabpanel>
+
+    <!-- Panel de Tipos de Solicitud / Servicio -->
+    <p-tabpanel value="servicios">
+      <div class="ti-panel-toolbar">
+        <div class="ti-toolbar-filtros">
+          <input
+            pInputText
+            type="search"
+            class="ti-input-buscar"
+            placeholder="Buscar por nombre o descripción de servicio..."
+            [ngModel]="busquedaTipos()"
+            (ngModelChange)="busquedaTipos.set($event)"
+          />
+          <p-select
+            class="ti-select-estado"
+            [options]="opcionesEstado"
+            optionLabel="label"
+            optionValue="value"
+            [ngModel]="estadoTipos()"
+            (ngModelChange)="estadoTipos.set($event)"
+          />
+          @if (busquedaTipos() || estadoTipos() !== null) {
+            <p-button
+              icon="pi pi-filter-slash"
+              label="Limpiar"
+              severity="secondary"
+              [outlined]="true"
+              (onClick)="limpiarFiltrosTipos()"
+            />
+          }
+        </div>
+        <p-button
+          icon="pi pi-refresh"
+          label="Actualizar"
+          severity="secondary"
+          [outlined]="true"
+          [loading]="cargandoTipos()"
+          (onClick)="cargarTiposServicio()"
+        />
+      </div>
+
+      @if (!cargandoTipos() && tiposFiltrados().length === 0) {
+        <ti-empty-state
+          titulo="Sin tipos de servicio"
+          descripcion="No se encontraron servicios que coincidan con los filtros aplicados."
+          accionTexto="Limpiar filtros"
+          (accion)="limpiarFiltrosTipos()"
+        />
+      } @else {
+        <p-table
+          [value]="tiposFiltrados()"
+          [loading]="cargandoTipos()"
+          [stripedRows]="true"
+          [rowHover]="true"
+          size="small"
+          responsiveLayout="scroll"
+          styleClass="ti-tabla"
+        >
+          <ng-template #header>
+            <tr>
+              <th style="width: 4.5rem;">ID</th>
+              <th style="width: 18rem;">Nombre del Servicio</th>
+              <th>Descripción</th>
+              <th style="width: 7rem;">Estado</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-s>
+            <tr>
+              <td class="ti-celda-id">#{{ s.id }}</td>
+              <td class="ti-celda-servicio">
+                <div class="ti-servicio-badge">
+                  <i class="pi pi-wrench ti-icono-servicio"></i>
+                  <span class="ti-nombre-texto">{{ s.nombre }}</span>
+                </div>
+              </td>
+              <td class="ti-descripcion-texto">
+                {{ s.descripcion || 'Sin descripción detallada' }}
+              </td>
+              <td>
+                <p-tag
+                  [value]="s.activo ? 'Activo' : 'Inactivo'"
+                  [severity]="s.activo ? 'success' : 'secondary'"
+                />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      }
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>

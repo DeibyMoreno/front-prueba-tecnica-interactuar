@@ -1,0 +1,44 @@
+<p-toast position="top-right" />
+<p-confirmdialog />
+
+<div class="ti-layout">
+  <header class="ti-topbar">
+    <div class="ti-brand-wrap">
+      <p-button
+        icon="pi pi-bars"
+        [text]="true"
+        severity="secondary"
+        ariaLabel="Abrir menú"
+        styleClass="ti-menu-btn"
+        (onClick)="menuAbierto.set(true)"
+      />
+      <span class="ti-brand"> <i class="pi pi-wrench"></i> Soporte TI </span>
+    </div>
+    @if (salud() !== 'conectada' && salud() !== 'cargando'){
+      <p-tag
+      [value]="salud() !== 'conectada' && salud() !== 'cargando' ? 'API sin conexión' : ''"
+      [severity]="salud() === 'conectada' ? 'success' : salud() === 'cargando' ? 'info' : 'danger'"
+    />}
+  </header>
+
+  <div class="ti-body">
+    <nav class="ti-sidebar" aria-label="Navegación principal">
+      <a routerLink="/solicitudes" routerLinkActive="active"><i class="pi pi-inbox"></i> Solicitudes</a>
+      <a routerLink="/maestros" routerLinkActive="active"><i class="pi pi-database"></i> Tablas Maestras</a>
+    </nav>
+    <main class="ti-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>
+
+<p-drawer [(visible)]="menuAbierto" header="Soporte TI">
+  <nav class="ti-drawer-nav">
+    <a routerLink="/solicitudes" routerLinkActive="active" (click)="menuAbierto.set(false)"
+      ><i class="pi pi-inbox"></i> Solicitudes</a
+    >
+    <a routerLink="/maestros" routerLinkActive="active" (click)="menuAbierto.set(false)"
+      ><i class="pi pi-database"></i> Tablas Maestras</a
+    >
+  </nav>
+</p-drawer>

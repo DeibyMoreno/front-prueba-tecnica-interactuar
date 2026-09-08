@@ -12,5 +12,10 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/solicitudes/pages/solicitud-detalle/solicitud-detalle').then((m) => m.SolicitudDetalle),
   },
+  {
+    path: 'maestros',
+    loadComponent: () =>
+      import('./features/catalogos/pages/catalogos-list/catalogos-list').then((m) => m.CatalogosList),
+  },
   { path: '**', redirectTo: 'solicitudes' },
 ];
