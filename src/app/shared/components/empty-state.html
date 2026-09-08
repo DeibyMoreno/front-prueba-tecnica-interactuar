@@ -1,0 +1,10 @@
+<div class="ti-empty">
+  <i class="pi pi-inbox ti-empty-icon"></i>
+  <h3>{{ titulo() }}</h3>
+  @if (descripcion()) {
+    <p>{{ descripcion() }}</p>
+  }
+  @if (accionTexto()) {
+    <p-button [label]="accionTexto()" icon="pi pi-plus" (onClick)="accion.emit()" />
+  }
+</div>
